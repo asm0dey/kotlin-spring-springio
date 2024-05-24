@@ -8,7 +8,6 @@ drawings:
 routerMode: history
 selectable: true
 remoteAssets: true
-download: true
 colorSchema: 'dark'
 layout: intro
 canvasWidth: 800
