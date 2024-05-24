@@ -16,7 +16,7 @@ dependencies:
     version: 0.21.2
   '@slidev/theme-seriph':
     specifier: '*'
-    version: 0.21.3
+    version: 0.25.0
 
 devDependencies:
   '@iconify-json/flat-color-icons':
@@ -1290,14 +1290,13 @@ packages:
       theme-vitesse: 0.1.14
     dev: false
 
-  /@slidev/theme-seriph@0.21.3:
-    resolution: {integrity: sha512-cLya6O4hmcLHUhloCMPPoKMLX27Q+8M8pRS82BSsLXVeXTXrlpc3l3glx5VB738p+NQr7FgqFN6H2CXQRoVv9Q==}
-    engines: {node: '>=14.0.0', slidev: '>=0.19.3'}
+  /@slidev/theme-seriph@0.25.0:
+    resolution: {integrity: sha512-PnFQbn4I70+/cVie5iAr0Im6sYvnwjkO7Yj5KonTyJZFFJFytckLTrD3ijft/J4cRnz7OmSzTyQKNX1FN/x0YQ==}
+    engines: {node: '>=14.0.0', slidev: '>=v0.47.0'}
     dependencies:
-      '@slidev/types': 0.22.7
-      codemirror-theme-vars: 0.1.1
-      prism-theme-vars: 0.2.4
-      theme-vitesse: 0.1.14
+      '@slidev/types': 0.47.5
+      codemirror-theme-vars: 0.1.2
+      prism-theme-vars: 0.2.5
     dev: false
 
   /@slidev/types@0.22.7:
