@@ -607,6 +607,8 @@ layout: section
 
 # JDBC
 
+## Chapter 3
+
 ---
 
 # Obtain user by id
@@ -620,9 +622,39 @@ WHERE id = ?
 
 ---
 
+# Or, for example...
+
+```sql {1-18|18-22}{maxHeight:'340px'}
+SELECT DISTINCT book.id
+              , (SELECT COALESCE(JSON_GROUP_ARRAY(JSON_ARRAY(t.v0, t.v1, t.v2, t.v3, t.v 4, t.v5, t.v6, t.v7, t.v8,
+                                                             t.v9)), JSON_ARRAY())
+                 FROM (SELECT b.id AS v0 , b.path AS v1 , b.name AS v2 , b.date AS v3 , b.added AS v4 , b.sequence AS v5
+                            , b.sequence_number AS v6 , b.lang AS v7 , b.zip_file AS v8 , b.seqid AS v9 FROM book AS b
+                       WHERE b.id = book.id) AS t)                AS book
+              , (SELECT COALESCE(JSON_GROUP_ARRAY(JSON_ARRAY(t.v0, t.v1, t.v2, t.v3, t.v4, t.v5, t.v6)), JSON_ARRAY())
+                 FROM (SELECT DISTINCT author.id AS v0 , author.fb2id AS v1 , author.first _name AS v2
+                                    , author.middle_name AS v3 , author.last_name AS v4 , author.nickname AS v5 , author.added AS v6
+                       FROM author
+                                JOIN book_author ON book_author.author_id = author.id
+                       WHERE book_author.book_id = book.id) AS t) AS authors
+              , (SELECT COALESCE(JSON_GROUP_ARRAY(JSON_ARRAY(t.v0, t.v1)), JSON_ARRAY())
+                 FROM (SELECT DISTINCT genre.name AS v0, genre.id AS v1
+                       FROM genre
+                                JOIN book_genre ON book_genre.genre_id = genre.id
+                       WHERE book_genre.book_id = book.id) AS t)  AS genres
+              , book.sequence
+FROM book
+         JOIN book_author ON book_author.book_id = book.id
+WHERE (book.seqid = 40792 AND book_author.author_id = 34606)
+ORDER BY book.sequence_number ASC NULLS LAST, book.name
+``` 
+
+---
+
 # In Java
 
-<logos-java />
+<logos-java /> <span v-click="'9'" v-click.hide="'10'">Let's inline mapper</span>
+````md magic-move
 ```java {all|1|2|5-13|7|8|9|10|11}
 public List<Person> findById(int id) {
   return jdbcTemplate.query("SELECT * FROM users WHERE id = ?", new UserRowMapper(), id);
@@ -631,18 +663,13 @@ public List<Person> findById(int id) {
 private static class UserRowMapper implements RowMapper<Person> {
   @Override
   public Person mapRow(ResultSet resultSet, int i) throws SQLException {
-  int id = resultSet.getInt("id");
-  String name = resultSet.getString("name");
-  Double age = resultSet.getDouble("age");
-  return new Person(id, name, age);
+    int id = resultSet.getInt("id");
+    String name = resultSet.getString("name");
+    Double age = resultSet.getDouble("age");
+    return new Person(id, name, age);
   }
 }
 ```
----
-
-# Let's inline mapper
-
-<logos-java />
 ```java {all|2|3-6|7}
 public List<Person> findById(int userId) {
   return jdbcTemplate.query("SELECT * FROM users WHERE id = ?", (resultSet, i) -> {
@@ -653,19 +680,20 @@ public List<Person> findById(int userId) {
   }, userId);
 }
 ```
+````
+---
 
-<v-click>
+# I don't like it
 
 - Too many mappers
-- Parameters too far from query
+- Parameters are too far from query
 
 <twemoji-loudly-crying-face />
 
-</v-click>
 
 ---
 
-# Why?
+# Why should it be so?
 
 <v-clicks>
 
@@ -691,8 +719,12 @@ return jdbcTemplate.query("SELECT * FROM users WHERE id = ?", userId) { rs, _ ->
 }
 ```
 
+<v-click>
+
 - `vararg` doesn't have to be in the last position
 - unused parameter of a lambda can be named `_`
+
+</v-click>
 
 
 ---
@@ -720,12 +752,31 @@ return jdbcTemplate.query("SELECT * FROM users WHERE id = ?", userId)
 </v-click>
 
 ---
-layout: two-cols
+
+# You can do the same for your own code!
+
+From <logos-java />
+```java
+public List<String> transformStrings(Function<String, String> mapper, String... args){}
+```
+
+<v-click>
+
+To <logos-kotlin-icon />
+```kotlin
+fun transformStrings(vararg args: String, mapper: (String) -> String): List<String>{}
+```
+
+</v-click>
+
 ---
+layout: two-cols-header
+---
+# More on extensions for Spring
 
 
-# More on extensions
 
+::left::
 
 - [spring-beans](https://docs.spring.io/spring-framework/docs/6.0.4/kdoc-api/spring-beans/index.html)
 - [spring-context](https://docs.spring.io/spring-framework/docs/6.0.4/kdoc-api/spring-context/index.html)
@@ -736,7 +787,6 @@ layout: two-cols
 
 ::right::
 
-# for Spring
 
 - [spring-test](https://docs.spring.io/spring-framework/docs/6.0.4/kdoc-api/spring-test/index.html)
 - [spring-tx](https://docs.spring.io/spring-framework/docs/6.0.4/kdoc-api/spring-tx/index.html)
@@ -744,6 +794,136 @@ layout: two-cols
 - [spring-webflux](https://docs.spring.io/spring-framework/docs/6.0.4/kdoc-api/spring-webflux/index.html)
 - [spring-webmvc](https://docs.spring.io/spring-framework/docs/6.0.4/kdoc-api/spring-webmvc/index.html)
 
+
+---
+layout: section
+---
+
+# Reactive persistence
+
+## Chapter 4
+
+---
+
+<img src="/suspend.jpg" class="h-90 shadow rounded ml-20" />
+
+---
+
+# Spring R2DBC
+
+````md magic-move
+```kotlin {none|2|3|all}
+@Repository
+class Repo(connectionFactory: ConnectionFactory) {
+    val client = DatabaseClient.create(connectionFactory)
+}
+```
+```kotlin {4|5|6|7|8}
+@Repository
+class Repo(connectionFactory: ConnectionFactory) {
+    val client = DatabaseClient.create(connectionFactory)
+    suspend fun createUserAndReturnId() =
+        client
+            .sql("INSERT INTO users (name, email, age) VALUES ('Pasha', :email, NULL) RETURNING ID")
+            .bind("email", RandomStringUtils.randomAlphabetic(20))
+            .fetch()
+            .awaitSingle()["id"] as? Long ?: error("not long on not returned")
+}
+```
+```kotlin {9-13}
+@Repository
+class Repo(connectionFactory: ConnectionFactory) {
+    val client = DatabaseClient.create(connectionFactory)
+    suspend fun createUserAndReturnId() =
+        client
+            .sql("INSERT INTO users (name, email, age) VALUES ('Pasha', :email, NULL) RETURNING ID")
+            .bind("email", RandomStringUtils.randomAlphabetic(20))
+            .fetch()
+            .awaitSingle()["id"] as? Long ?: error("not long on not returned")
+    // inside Spring ↓
+    suspend fun <T> RowsFetchSpec<T>.awaitSingle(): T {
+      return first().awaitSingleOrNull() ?: throw EmptyResultDataAccessException(1)
+    } 
+}
+```
+```kotlin {4-9}
+@Repository
+class Repo(connectionFactory: ConnectionFactory) {
+    val client = DatabaseClient.create(connectionFactory)
+    suspend fun createUserAndReturnId() =
+        client
+            .sql("INSERT INTO users (name, email, age) VALUES ('Pasha', :email, NULL) RETURNING ID")
+            .bind("email", RandomStringUtils.randomAlphabetic(20))
+            .fetch()
+            .awaitSingle()["id"] as? Long ?: error("not long on not returned")
+}
+```
+````
+
+---
+
+# Transactions
+
+```kotlin {3|4|1|all}
+@Transactional
+suspend fun failTransactional(): Long {
+    val curId =  repo.createUserAndReturnId()
+    repo.createUserWithConflictingId(curId) // will throw
+    return curId
+}
+```
+
+<p v-click>Nothing changes from the client standpoint!</p>
+
+---
+
+# Repositories
+
+````md magic-move
+```kotlin {1}
+interface User : CoroutineCrudRepository<User, Long> {
+}
+```
+```kotlin {1,4|6|7-8}
+interface User : CoroutineCrudRepository<User, Long> {
+}
+// Inside Spring
+interface CoroutineCrudRepository<T, ID> : Repository<T, ID> {
+  // ...
+  suspend fun <S : T> save(entity: S): T
+  // Flow is an async unbounded collection
+  fun findAll(): Flow<T>
+  // ...
+}
+```
+```kotlin
+interface User : CoroutineCrudRepository<User, Long> {
+}
+```
+```kotlin {2|3|4}
+interface User : CoroutineCrudRepository<User, Long> {
+  suspend fun findOne(id: String): User
+  fun findByFirstname(firstname: String): Flow<User>
+  suspend fun findAllByFirstname(id: String): List<User>
+}
+```
+````
+
+<p v-click>Function is either suspend or returns `Flow`</p>
+
+---
+
+# Transactions with repositories?
+
+```kotlin {none|3|4|5|all}
+@Transactional
+suspend fun failTransactional(): Long {
+  val u = User(null, "me@asm0dey.site", 37)
+  val savedId =  repo.save(u)
+  repo.save(u.copy(id = savedId)) // will throw
+  return curId
+}
+```
 
 
 ---
@@ -761,23 +941,25 @@ val beans = beans {
   bean { jacksonObjectMapper() }
 }
 ```
-<v-click>
+
+<div v-click="'2'">
 
 Modified Jackson's `ObjectMapper` to work with `data` classes from `jackson-module-kotlin`
 
-```kotlin {all|1|3|2}
+```kotlin {all|1|3|2}{at:'3'}
 @Bean
 fun kotlinMapper(): ObjectMapper {
   return jacksonObjectMapper()
 }
 ```
 
-</v-click>
-<v-click>
+</div>
+<div v-click="'6'">
 
 4 lines instead of 1 <twemoji-face-screaming-in-fear />
 
-</v-click>
+</div>
+
 ---
 
 # Custom bean
@@ -824,17 +1006,17 @@ runApplication<SampleApplication>(*args)
 val beans = { /* */ }
 ```
 
-<v-click>
+<div v-click="'1'">
 
 Let's change it to
-```kotlin {all|2}
+```kotlin {all|2}{at:'2'}
 runApplication<SampleApplication>(*args) {
   addInitializers(beans)
 }
 ```
 
-</v-click>
-<v-click>
+</div>
+<div v-click="'3'">
 
 And run it…
 ```plain
@@ -842,20 +1024,20 @@ Started SampleApplicationKt in 1.776 seconds (process running for 2.133)
 ```
 <twemoji-party-popper />
 
-</v-click>
+</div>
 
 ---
 
 # Let's test it
 Bean:
-```kotlin {all|2|3}
+```kotlin {all|2|3|all}
 @Component
 class MyBean(val jsonLogger: JsonLogger) {
   fun test() = jsonLogger.log("Test")
 }
 ```
 Test:
-```kotlin {all|1|3|5}
+```kotlin {all|1|3|5}{at:'3'}
 @SpringBootTest
 class ConfigTest {
   @Autowired private lateinit var myBean: MyBean
@@ -865,32 +1047,31 @@ class ConfigTest {
 ```
 
 ---
-layout: two-cols
+layout: two-cols-header
 ---
-
-<template v-slot:default>
 
 # Run it
 
-```plain
+::left::
+
+```
 No qualifying bean of type 
 'com.github.asm0dey.sample.JsonLogger'
   available: expected at least 1 
   bean which qualifies as autowire candidate
 ```
 
-<div v-click="2">
+<div v-click="'2'">
 
 That's because our tests do not call `main`!
 
 </div>
 
-</template>
-<template v-slot:right>
+::right::
 
-<h1 v-click="1"><img src="/explosion.png"></h1>
+<img src="/explosion.png" v-click="'1'" class="h-80 rounded ml-16">
 
-</template>
+
 
 ---
 
@@ -903,7 +1084,7 @@ class BeansInitializer : ApplicationContextInitializer<GenericApplicationContext
 }
 ```
 
-<v-click>
+<div v-click>
 
 `application.yml`:
 
@@ -911,17 +1092,17 @@ class BeansInitializer : ApplicationContextInitializer<GenericApplicationContext
 context.initializer.classes: "com.github.asm0dey.sample.BeansInitializer"
 ```
 
-</v-click>
-<v-click>
+</div>
+<div v-click="'5'">
 
 `Main.kt`:
-```kotlin {all|2}
+```kotlin {all|2}{at:6}
 fun main(args: Array<String>) {
   runApplication<SampleApplication>(*args)
 }
 ```
 
-</v-click>
+</div>
 
 ---
 layout: section
@@ -933,7 +1114,7 @@ layout: section
 
 # Spring Security
 
-```kotlin {all|1|7|8|9|10|11|12|13|14,15|18|7-19}
+```kotlin {none|1|7|8|9|10|11|12|13|14,15|18|7-19}{maxHeight:'320px'}
 val beans = beans {
   bean { jacksonObjectMapper() }
   bean(::JsonLogger)
