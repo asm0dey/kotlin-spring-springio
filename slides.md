@@ -326,22 +326,20 @@ Content-Type: application/json
 {"name": "Pasha", "age": null}
 ```
 
-<v-click>
+<div v-click="'2'">
 
-```http {all|1}
+```http {all|1}{at:'3'}
 HTTP/1.1 200 
 Content-Length: 0
 ```
 
-</v-click>
+</div>
 
 ::right::
 
-<v-click>
 
-<img src="/surprised.png" class="h-80 shadow rounded ml-16" />
+<img src="/surprised.png" class="h-80 shadow rounded ml-16" v-click="'4'" />
 
-</v-click>
 
 ---
 layout: two-cols-header
