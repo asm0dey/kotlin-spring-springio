@@ -1,6 +1,5 @@
 ---
 theme: apple-basic
-css: unocss
 background: https://source.unsplash.com/collection/94734566/1920x1080
 lineNumbers: true
 drawings:
@@ -106,53 +105,49 @@ https://start.spring.io
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id("org.springframework.boot") version "3.0.2"
-	id("io.spring.dependency-management") version "1.1.0"
-	kotlin("jvm") version "1.8.21"
-	kotlin("plugin.spring") version "1.8.21"
-	kotlin("plugin.jpa") version "1.8.21"
+  id("org.springframework.boot") version "3.3.0"
+  id("io.spring.dependency-management") version "1.1.5"
+  kotlin("jvm") version "1.9.24"
+  kotlin("plugin.spring") version "1.9.24"
+  kotlin("plugin.jpa") version "1.9.24"
 }
 
 group = "com.github.asm0dey"
 version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_17
+
+java {
+  sourceCompatibility = JavaVersion.VERSION_21
+}
 
 repositories {
-	mavenCentral()
+  mavenCentral()
 }
-
-extra["testcontainersVersion"] = "1.17.6"
 
 dependencies {
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	implementation("org.springframework.boot:spring-boot-starter-security")
-	implementation("org.springframework.boot:spring-boot-starter-validation")
-	implementation("org.springframework.boot:spring-boot-starter-web")
-	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-	runtimeOnly("org.postgresql:postgresql")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testImplementation("org.springframework.security:spring-security-test")
-	testImplementation("org.testcontainers:junit-jupiter")
-	testImplementation("org.testcontainers:postgresql")
-}
-
-dependencyManagement {
-	imports {
-		mavenBom("org.testcontainers:testcontainers-bom:${property("testcontainersVersion")}")
-	}
+  implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+  implementation("org.springframework.boot:spring-boot-starter-security")
+  implementation("org.springframework.boot:spring-boot-starter-validation")
+  implementation("org.springframework.boot:spring-boot-starter-web")
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+  implementation("org.jetbrains.kotlin:kotlin-reflect")
+  runtimeOnly("org.postgresql:postgresql")
+  testImplementation("org.springframework.boot:spring-boot-starter-test")
+  testImplementation("org.springframework.boot:spring-boot-testcontainers")
+  testImplementation("org.springframework.security:spring-security-test")
+  testImplementation("org.testcontainers:junit-jupiter")
+  testImplementation("org.testcontainers:postgresql")
+  testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.withType<KotlinCompile> {
-	kotlinOptions {
-		freeCompilerArgs = listOf("-Xjsr305=strict")
-		jvmTarget = "17"
-	}
+  kotlinOptions {
+    freeCompilerArgs += "-Xjsr305=strict"
+    jvmTarget = "21"
+  }
 }
 
 tasks.withType<Test> {
-	useJUnitPlatform()
+  useJUnitPlatform()
 }
 ```
 
@@ -166,17 +161,15 @@ layout: section
 
 # Main class
 
-```kotlin {all|6,7|10}
-package com.github.asm0dey.springkotlinstart
-
+```kotlin {all|4,6|8}
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class SpringKotlinStartApplication
+class SampleApplication
 
 fun main(args: Array<String>) {
-	runApplication<SpringKotlinStartApplication>(*args)
+  runApplication<SampleApplication>(*args)
 }
 ```
 
@@ -187,7 +180,7 @@ canvasWidth: 600
 # `runApplication`
 
 ```kotlin {all|1|2}
-inline fun <reified T : Any> runApplication(vararg args: String): ConfigurableApplicationContext =
+inline fun <reified T : Any> runApplication(vararg args: String) =
 		SpringApplication.run(T::class.java, *args)
 ```
 
@@ -203,7 +196,7 @@ layout: statement
 
 # Let's start implementing
 
-## MVC + Validation
+## Chapter 1. MVC + Validation
 
 ---
 
@@ -221,7 +214,7 @@ class PersonController {
 <v-click>
 
 `Person.kt`:
-```kotlin
+```kotlin {at:'+1'}
 data class Person(
   val name: String,
   val age: Int
@@ -234,14 +227,17 @@ data class Person(
 
 # Make an empty `POST`…
 
-```http {all|1|2}
+<div v-click.hide="'2'">
+
+```http {all|1|2}{at:'0'}
 POST localhost:8080/person
 Content-Type: application/json
 ```
 
-<v-click>
+</div>
+<div v-click="'2'">
 
-```http {all|5-7}
+```http {all|5-7}{at:'3'}
 HTTP/1.1 400 Bad Request
 Content-Type: application/json
 {
@@ -252,9 +248,12 @@ Content-Type: application/json
 }
 ```
 
+</div>
+<div v-click="'4'">
+
 Since `Person` is non-nullable — it's validated without `@NotNull` annotation
 
-</v-click>
+</div>
 
 ---
 
@@ -265,7 +264,7 @@ Since `Person` is non-nullable — it's validated without `@NotNull` annotation
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
 		freeCompilerArgs = listOf("-Xjsr305=strict")
-		jvmTarget = "17"
+		jvmTarget = "21"
 	}
 }
 ```
@@ -283,36 +282,42 @@ tasks.withType<KotlinCompile> {
 
 # Non-empty `POST` with empty properties
 
-```http 
+```http
 POST localhost:8080/person
 Content-Type: application/json
 
 {"name": null, "age": null}
 ```
-<v-click>
 
-On client
-```http {all|1}
+<div v-click> On client </div>
+<div v-click>
+
+```http {all|1}{at:3}
 HTTP/1.1 400 Bad Request
 Content-Type: application/json
 ```
 
-</v-click>
+</div>
 
-<v-click>
+<v-click> On server </v-click>
+<div v-click="'4'">
 
-On server
-```plain {all|2}
+```plain {all|2}{at:'5'}
 …Instantiation of [simple type, class com.github.asm0dey.sample.Person] 
   value failed for JSON property name due to missing
 ```
 
-</v-click>
+</div>
+
 
 
 ---
+layout: two-cols-header
+---
 
 # `POST` with non-empty name
+
+::left::
 
 ```http {all|4}
 POST localhost:8080/person
@@ -330,18 +335,19 @@ Content-Length: 0
 
 </v-click>
 
+::right::
+
 <v-click>
 
-<h1 class="text-center"><bold>Wait, what?</bold> <twemoji-face-screaming-in-fear /></h1>
+<img src="/surprised.png" class="h-80 shadow rounded ml-16" />
 
 </v-click>
 
 ---
-layout: two-cols
+layout: two-cols-header
 ---
 
-<template v-slot:default>
-
+::left ::
 # Rechecking
 
 ```kotlin {all|3}
@@ -351,15 +357,14 @@ data class Person(
 )
 ```
 
-</template>
 
-<template v-slot:right>
+::right::
+
 <v-click>
 
-![](/right.jpg)
+<img src="/right.jpg" class="shadow rounded " />
 
 </v-click>
-</template>
 
 
 ---
@@ -372,37 +377,39 @@ layout: statement
 
 # These types will be JVM primitives:
 
-- Double
-- Int
-- Float
-- Char
-- Short
-- Byte
-- Boolean
+- `Double`
+- `Int`
+- `Float`
+- `Char`
+- `Short`
+- `Byte`
+- `Boolean`
 
 
 ---
 
 # Updating class
 
-```kotlin {all|3}
+
+
+```kotlin {all|3}{at:'1'}
 data class Person(
   val name: String,
   @field:NotNull val age: Double?
 )
 ```
 
-<v-click>
+<div v-click="'2'">
 
-```http {all|4}
+```http {all|4}{at:3}
 POST localhost:8080/person
 Content-Type: application/json
 
 {"name": "Pasha", "age": null}
 ```
 
-</v-click>
-<v-click>
+</div>
+<v-click at="4">
 
 ```http
 HTTP/1.1 400 Bad Request
@@ -411,7 +418,7 @@ HTTP/1.1 400 Bad Request
 ```
 
 </v-click>
-<v-click>
+<v-click at="5">
 
 ```plain
 Field error in object 'person' on field 'age': rejected value [null]
@@ -446,6 +453,8 @@ layout: section
 ---
 
 # JPA
+
+## Chapter 2
 
 ---
 clicks: 3
@@ -482,8 +491,13 @@ data class Person(
 
 # Improving
 
+<div v-click.hide="'2'">
+
 `data` classes have `copy`, `equals`, `hashCode`, `copy`, and `componentX` defined
 
+</div>
+
+````md magic-move
 ```kotlin {all|2}
 @Entity
 data class Person(
@@ -496,13 +510,6 @@ data class Person(
   val age: Int,
 )
 ```
-
----
-
-# Improving
-
-`data` classes have `copy`, `equals`, `hashCode`, `copy`, and `componentX` defined
-
 ```kotlin {2|7,9}
 @Entity
 class Person(
@@ -515,20 +522,7 @@ class Person(
   val age: Int,
 )
 ```
-
-<v-click>
-
-JPA won's be able to write to `val`
-
-</v-click>
-
----
-
-# Improving
-
-`data` classes have `copy`, `equals`, `hashCode`, `copy`, and `componentX` defined
-
-```kotlin {7,9}
+```kotlin {7,9|3,4,6,8}
 @Entity
 class Person(
   @Id
@@ -540,8 +534,14 @@ class Person(
   var age: Int,
 )
 ```
+````
+
+<v-click at=3>
 
 JPA won's be able to write to `val`
+
+</v-click>
+
 
 ---
 
@@ -596,7 +596,7 @@ class Person(
 ) {
   // equals…
   override fun hashCode(): Int {
-  return id ?: 0
+    return id ?: 0
   }
 }
 ```
