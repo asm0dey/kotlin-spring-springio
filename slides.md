@@ -1119,7 +1119,7 @@ layout: section
 
 # Spring Security
 
-```kotlin {none|1|7|8|9|10|11|12|13|14,15|18|7-19}{maxHeight:'320px'}
+```kotlin {none|1|2-6|7|8|9|10|11|12|13|14,15|18|7-19}{maxHeight:'320px'}
 val beans = beans {
   bean { jacksonObjectMapper() }
   bean(::JsonLogger)
@@ -1184,6 +1184,8 @@ layout: statement
 - <logos-whatsapp-icon /> asm0dey
 - <skill-icons-instagram /> asm0dey
 - <logos-facebook /> asm0dey
+
+<img src="/news.png" width="200px" class="absolute right-10px bottom-10px invert rounded"/>
 
 ---
 layout: end
