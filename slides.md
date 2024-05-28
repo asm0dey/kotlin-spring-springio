@@ -38,8 +38,12 @@ image: 'avatar.jpg'
 </v-clicks>
 
 ---
+layout: two-cols-header
+---
 
 # BellSoft
+
+::left::
 
 * Vendor of Liberica JDK
 * Contributor to the OpenJDK
@@ -47,8 +51,11 @@ image: 'avatar.jpg'
 
 Liberica is the JDK officially recommended by <logos-spring-icon />
 
-<v-click>We know our stuff!</v-click>
+<v-click><b>We know our stuff!</b></v-click>
 
+::right::
+
+<img src="/news.png" class="invert rounded self-center"/>
 
 
 
