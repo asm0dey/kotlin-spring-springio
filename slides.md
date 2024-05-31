@@ -809,6 +809,74 @@ layout: section
 ## Chapter 4
 
 ---
+layout: two-cols-header
+---
+
+# Who knows what is reactive?
+
+::left::
+
+<v-clicks>
+
+- non-blocking
+- asynchronous
+- handles back-pressure
+
+</v-clicks>
+<v-click>
+
+The result is a monad...
+
+</v-click>
+
+::right::
+
+<img src="/jet.png" class="h-80 shadow rounded ml-20"/>
+
+---
+layout: two-cols-header
+---
+
+# Who knows what is reactive?
+
+::left::
+
+
+- non-blocking
+- asynchronous
+- handles back-pressure
+
+
+The result is either:
+- `Mono`: produces 0 to 1 items when it's ready
+- `Flux`: Produces 0 to ∞ items
+
+::right::
+
+<img src="/jet.png" class="h-80 shadow rounded ml-20"/>
+
+---
+
+# In Kotlin
+
+Coroutines operate on `suspend` functions
+
+`suspend` can be called from:
+
+- coroutine context
+- another `suspend` `fun`
+
+returns usual types - Lists, Strings, etc
+
+```kotlin {1|2|3|4}
+suspend fun randomNum(): Int {
+  val x = service1.randomNum() // suspend
+  val y = service2.randomNum() // suspend
+  return x + y
+}
+``` 
+
+---
 
 <img src="/suspend.jpg" class="h-90 shadow rounded ml-20" />
 
@@ -829,7 +897,7 @@ class Repo(connectionFactory: ConnectionFactory) {
     val client = DatabaseClient.create(connectionFactory)
     suspend fun createUserAndReturnId() =
         client
-            .sql("INSERT INTO users (name, email, age) VALUES ('Pasha', :email, NULL) RETURNING ID")
+            .sql("INSERT INTO users (name, email, age) VALUES ('Pasha', :email, NULL) RETURNING id")
             .bind("email", RandomStringUtils.randomAlphabetic(20))
             .fetch()
             .awaitSingle()["id"] as? Long ?: error("not long on not returned")
@@ -841,7 +909,7 @@ class Repo(connectionFactory: ConnectionFactory) {
     val client = DatabaseClient.create(connectionFactory)
     suspend fun createUserAndReturnId() =
         client
-            .sql("INSERT INTO users (name, email, age) VALUES ('Pasha', :email, NULL) RETURNING ID")
+            .sql("INSERT INTO users (name, email, age) VALUES ('Pasha', :email, NULL) RETURNING id")
             .bind("email", RandomStringUtils.randomAlphabetic(20))
             .fetch()
             .awaitSingle()["id"] as? Long ?: error("not long on not returned")
@@ -857,7 +925,7 @@ class Repo(connectionFactory: ConnectionFactory) {
     val client = DatabaseClient.create(connectionFactory)
     suspend fun createUserAndReturnId() =
         client
-            .sql("INSERT INTO users (name, email, age) VALUES ('Pasha', :email, NULL) RETURNING ID")
+            .sql("INSERT INTO users (name, email, age) VALUES ('Pasha', :email, NULL) RETURNING id")
             .bind("email", RandomStringUtils.randomAlphabetic(20))
             .fetch()
             .awaitSingle()["id"] as? Long ?: error("not long on not returned")
@@ -1159,6 +1227,7 @@ layout: section
 - Validation is better with Kotlin, but remember about primitives
 - `data` classes should not be used for JPA
 - JDBC is simpler with Kotlin
+- R2DBC is simpler with coroutines
 - Bean definition DSL is awesome
 - Specifically with security!
 
