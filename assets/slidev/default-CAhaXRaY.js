@@ -1,0 +1,1 @@
+import{o,b as s,f as t}from"../modules/vue-CGVKA8Ms.js";import{_ as n}from"../index-DwKBFZYr.js";const r={},i={class:"slidev-layout default"};function l(e,a){return o(),s("div",i,[t(e.$slots,"default")])}const _=n(r,[["render",l],["__file","/home/runner/work/kotlin-spring-springio/kotlin-spring-springio/node_modules/@slidev/client/layouts/default.vue"]]);export{_ as I};
